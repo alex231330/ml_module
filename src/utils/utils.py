@@ -1,6 +1,5 @@
 import PIL
 import numpy as np
-import config as cg
 
 def load_data(path='', shape=None, mode='eval'):
 
@@ -28,4 +27,3 @@ def load_data(path='', shape=None, mode='eval'):
     x = x[:, :, ::-1] - mean
     return x
 
-    

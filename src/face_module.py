@@ -1,17 +1,14 @@
-import module
 import os 
-import sys
 
 import numpy as np
 
 # Add utils folder
-sys.path.append('utils/')
 
-import toolkits
-import utils as ut
-import conf_loader as conf_l
+import utils.toolkits as toolkits
+import utils.utils as ut
+from  utils.conf_loader import ConfigLoader as conf_l
 
-class face_module(module):
+class FaceModule():
 
     def __init__(self, name, weight_path, config_path):
         self.path = weight_path

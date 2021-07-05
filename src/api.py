@@ -1,17 +1,23 @@
-from typing_extensions import runtime
-from flask import Flask, request
+import ntpath
+from flask import Flask, request, jsonify
+import requests
+import logging
 import sys 
+import os
+import shutil
 
-import face_module as fm
 
-sys.path.append('utils/')
+from face_module import FaceModule as fm
 
-import conf_loader as conf_l
+from  utils.conf_loader import ConfigLoader as conf_l
+
+UPLOAD_FOLDER = './media'
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 ### Init flask app 
-app = Flask.flash(__name__)
-app.config["DEBUG"] = True 
-
+app = Flask(__name__)
+app.logger.setLevel(logging.INFO)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Check current module status
 
@@ -21,14 +27,26 @@ def is_alive():
 
 # Upload image
 
-@app.route('/upload_image', methods=['POST'])
+@app.route('/process_image', methods=['GET'])
 def upload():
-    if request.method == 'POST':
+    content = request.json
+    print(content, file=sys.stderr)
+    if request.method == 'GET':
+        uuid = content['uuid']
+        header = {'accept': '*/*'}
+        
+        res = requests.get("http://185.12.125.77:8080/api/show?uuid=" + uuid , allow_redirects=True, headers=header)
+
+        if res.ok:
+            app.logger.info(res.headers)
+            open('{}/img.png'.format(UPLOAD_FOLDER), 'wb').write(res.content)
+            ml_m.process("")
+        else:
+            jsonify({"Result" : 1, "Description" : "Wrong UUID"})
 
         #TODO Add payload to process 
 
-        ml_m.process("")
-    return ''
+    return jsonify({"Result" : 0, "Description" : "OK"})
 
 # Get status of task
 
@@ -41,14 +59,15 @@ if __name__ == "__main__":
     #TODO: Add requir args to constructor 
 
     CONFIG_PATH = "config/module_conf.ini"
-    WEIGHTS_PATH = ""
 
     cf = conf_l(CONFIG_PATH)
-    ml_conf = cf.get("ML")
-    api_conf = cf.get("API")
+    ml_conf = cf.get_section("ML")
+    api_conf = cf.get_section("API")
+
+    print(type(ml_conf))
 
     ml_m = fm(api_conf.get("name"), ml_conf.get("weights_path"), CONFIG_PATH)
-
+    
     result = ml_m.load()
 
     if result != 0:
