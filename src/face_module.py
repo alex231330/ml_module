@@ -5,10 +5,11 @@ import sys
 import numpy as np
 
 # Add utils folder
-sys.path.append('./utils')
+sys.path.append('utils/')
 
 import toolkits
 import utils as ut
+import conf_loader as conf_l
 
 class face_module(module):
 
@@ -16,6 +17,11 @@ class face_module(module):
         self.path = weight_path
         self.name = name
         self.model_eval = None
+        self.config = conf_l(config_path)
+        self.ml_conf = self.config.get_section("ML")
+
+        if len(self.ml_conf) == 0:
+            print("Wrong config!")
 
     def load(self):
         toolkits.initialize_GPU()
@@ -27,7 +33,8 @@ class face_module(module):
 
         # TODO: Add config loader and print here useful data about what`s happening
 
-        print('Running model with next configuration'.format(self.name, self.weight_path, args.aggregation, args.loss, args.benchmark))
+        print('Running model with next configuration'.format(self.name, self.weight_path, self.ml_conf.get("feature_dim"),
+            self.ml_conf.get("batch_size")))
 
         if self.weight_path:
             if os.path.isfile(self.weight_path):

@@ -124,7 +124,6 @@ def image_encoding(model, facepaths):
             print('-> finish encoding {}/{} images.'.format(c*args.batch_size, num_faces))
     return face_feats
 
-
 def template_encoding(templates, medias, img_norm_feats):
     # ==========================================================
     # 1. face image --> l2 normalization.
@@ -160,7 +159,6 @@ def template_encoding(templates, medias, img_norm_feats):
             print('-> finish encoding {}/{} templates.'.format(c, num_temp))
     return tmp_feats
 
-
 def verification(unique_templates, tmp_feats, p1, p2):
     print('==> compute template verification results.')
     # ==========================================================
@@ -193,7 +191,6 @@ def verification(unique_templates, tmp_feats, p1, p2):
         if c % 500 == 0: print('-> finish {}/{} pair verification.'.format(c, num_sublists))
     return score
 
-
 def compute_ROC(labels, scores, roc_path):
     print('==> compute ROC.')
     import sklearn.metrics as skm
@@ -208,7 +205,6 @@ def compute_ROC(labels, scores, roc_path):
         print('TAR @ FAR = {} : {}'.format(far, tar))
         file.write('TAR @ FAR = {}: {}\n'.format(far, tar))
     file.close()
-
 
 if __name__ == '__main__':
     facepaths, templates, medias = get_data_path()
