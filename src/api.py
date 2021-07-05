@@ -40,7 +40,7 @@ def upload():
         if res.ok:
             app.logger.info(res.headers)
             open('{}/img.png'.format(UPLOAD_FOLDER), 'wb').write(res.content)
-            ml_m.process("")
+            ml_m.process(res.content)
         else:
             jsonify({"Result" : 1, "Description" : "Wrong UUID"})
 
@@ -64,10 +64,10 @@ if __name__ == "__main__":
     ml_conf = cf.get_section("ML")
     api_conf = cf.get_section("API")
 
-    print(type(ml_conf))
+    print(ml_conf)
 
     ml_m = fm(api_conf.get("name"), ml_conf.get("weights_path"), CONFIG_PATH)
-    
+
     result = ml_m.load()
 
     if result != 0:
@@ -75,4 +75,4 @@ if __name__ == "__main__":
         exit()
     else:
         print("Module loaded succesful!")
-    app.run(debug=True)
+    app.run()

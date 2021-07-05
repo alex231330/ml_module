@@ -1,17 +1,25 @@
-import os 
+import os
 
 import numpy as np
+
+import io
+from PIL import Image
 
 # Add utils folder
 
 import utils.toolkits as toolkits
 import utils.utils as ut
-from  utils.conf_loader import ConfigLoader as conf_l
+from utils.conf_loader import ConfigLoader as conf_l
+
+import tensorflow.compat.v1 as tf
+from tensorflow.python.keras.backend import set_session
+from tensorflow.python.keras.models import load_model
+
 
 class FaceModule():
 
     def __init__(self, name, weight_path, config_path):
-        self.path = weight_path
+        self.weight_path = weight_path
         self.name = name
         self.model_eval = None
         self.config = conf_l(config_path)
@@ -21,37 +29,53 @@ class FaceModule():
             print("Wrong config!")
 
     def load(self):
-        toolkits.initialize_GPU()
+        tf.disable_v2_behavior()
+        os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        session = tf.Session(config=config)
 
         # ==> loading the pre-trained model.
         import model
-        
-        model_eval = model.Vggface2_ResNet50(mode="eval")
+
+        self.model_eval = model.Vggface2_ResNet50(mode="eval")
 
         # TODO: Add config loader and print here useful data about what`s happening
 
         print('Running model with next configuration'.format(self.name, self.weight_path, self.ml_conf.get("feature_dim"),
-            self.ml_conf.get("batch_size")))
+                                                             self.ml_conf.get("batch_size")))
 
-        if self.weight_path:
-            if os.path.isfile(self.weight_path):
-                self.model_eval.load_weights(self.weight_path, by_name=True)
-                print('==> successfully loaded the model {}'.format(self.weight_path))
-                return 0
-            else:
-                raise IOError('==> can not find the model to load {}'.format(self.weight_path))
-                return 1 
+        path_to_load = self.ml_conf.get("weights_path")
+
+        global graph
+        global sess
+        graph = tf.get_default_graph()
+        sess = tf.Session()
+
+        set_session(sess)
+
+        if os.path.isfile("C:/Users/Alex/Documents/Projects/ml_module_rest/weights/weights_old.h5"):
+            self.model_eval = load_model(
+                "C:/Users/Alex/Documents/Projects/ml_module_rest/weights/weights_old.h5")
+            print('==> successfully loaded the model {}'.format(self.weight_path))
+            return 0
+        else:
+            raise IOError(
+                '==> can not find the model to load {}'.format(self.weight_path))
+            return 1
         return 0
 
     def process(self, payload):
-        
-        num_faces = len(payload)
 
-        im_array = np.array([ut.load_data(path=i, shape=(224, 224, 3), mode='eval') for i in payload])
-        f = self.model_eval.predict(im_array, batch_size=self.conf.batch_size)
-        start = c * self.conf.batch_size
-        end = min((c + 1) * self.conf.batch_size, num_faces)
-        face_feats[start:end] = f
-        if c % 500 == 0:
-            print('-> finish encoding {}/{} images.'.format(c*args.batch_size, num_faces))
+        #im_array = np.array([ut.load_data(path=i, shape=(224, 224, 3), mode='eval') for i in payload])
+
+        image = Image.open(io.BytesIO(payload))
+
+        im_array = np.array([ut.load_data(img=image, shape=(224, 224, 3), mode='eval')])
+        with graph.as_default():
+            set_session(sess)
+            preds = self.model_eval.predict(
+                im_array, batch_size=int(self.ml_conf.get("batch_size")))
+            print(ut.decode_predictions(preds))
+
         return 0

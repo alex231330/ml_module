@@ -1,16 +1,15 @@
 import os
 import numpy as np
 
-def initialize_GPU(args):
+def initialize_GPU():
     # Initialize GPUs
     import tensorflow.compat.v1 as tf
     tf.disable_v2_behavior()
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+    os.environ["CUDA_VISIBLE_DEVICES"] = 2
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     session = tf.Session(config=config)
     return session
-
 
 # set up multiprocessing
 def set_mp(processes=8):
