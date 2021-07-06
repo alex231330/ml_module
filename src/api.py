@@ -30,6 +30,7 @@ def is_alive():
 @app.route('/process_image', methods=['GET'])
 def upload():
     content = request.json
+    output = ""
     print(content, file=sys.stderr)
     if request.method == 'GET':
         uuid = content['uuid']
@@ -37,16 +38,17 @@ def upload():
         
         res = requests.get("http://185.12.125.77:8080/api/show?uuid=" + uuid , allow_redirects=True, headers=header)
 
+
         if res.ok:
             app.logger.info(res.headers)
             open('{}/img.png'.format(UPLOAD_FOLDER), 'wb').write(res.content)
-            ml_m.process(res.content)
+            output = ml_m.process(res.content)
         else:
-            jsonify({"Result" : 1, "Description" : "Wrong UUID"})
+            return jsonify({"Result" : 1, "Description" : "Wrong UUID"})
 
         #TODO Add payload to process 
 
-    return jsonify({"Result" : 0, "Description" : "OK"})
+    return jsonify({"Result" : 0, "Description" : "OK", "Output": output})
 
 # Get status of task
 

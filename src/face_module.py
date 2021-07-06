@@ -15,6 +15,7 @@ import tensorflow.compat.v1 as tf
 from tensorflow.python.keras.backend import set_session
 from tensorflow.python.keras.models import load_model
 
+from mtcnn.mtcnn import MTCNN
 
 class FaceModule():
 
@@ -36,9 +37,9 @@ class FaceModule():
         session = tf.Session(config=config)
 
         # ==> loading the pre-trained model.
-        import model
+        # import model
 
-        self.model_eval = model.Vggface2_ResNet50(mode="eval")
+        # self.model_eval = model.Vggface2_ResNet50(mode="eval")
 
         # TODO: Add config loader and print here useful data about what`s happening
 
@@ -52,17 +53,19 @@ class FaceModule():
         graph = tf.get_default_graph()
         sess = tf.Session()
 
-        set_session(sess)
+        set_session(sess)       
 
-        if os.path.isfile("C:/Users/Alex/Documents/Projects/ml_module_rest/weights/weights_old.h5"):
-            self.model_eval = load_model(
-                "C:/Users/Alex/Documents/Projects/ml_module_rest/weights/weights_old.h5")
-            print('==> successfully loaded the model {}'.format(self.weight_path))
-            return 0
-        else:
-            raise IOError(
-                '==> can not find the model to load {}'.format(self.weight_path))
-            return 1
+        self.detector = MTCNN()
+
+        # if os.path.isfile("C:/Users/Alex/Documents/Projects/ml_module_rest/weights/weights_old.h5"):
+        #     self.model_eval = load_model(
+        #         "C:/Users/Alex/Documents/Projects/ml_module_rest/weights/weights_old.h5")
+        #     print('==> successfully loaded the model {}'.format(self.weight_path))
+        #     return 0
+        # else:
+        #     raise IOError(
+        #         '==> can not find the model to load {}'.format(self.weight_path))
+        #     return 1
         return 0
 
     def process(self, payload):
@@ -71,11 +74,15 @@ class FaceModule():
 
         image = Image.open(io.BytesIO(payload))
 
-        im_array = np.array([ut.load_data(img=image, shape=(224, 224, 3), mode='eval')])
+        #im_array = np.array([ut.load_data(img=image, shape=(224, 224, 3), mode='eval')])
         with graph.as_default():
             set_session(sess)
-            preds = self.model_eval.predict(
-                im_array, batch_size=int(self.ml_conf.get("batch_size")))
-            print(ut.decode_predictions(preds))
+            # preds = self.model_eval.predict(
+            #     im_array, batch_size=int(self.ml_conf.get("batch_size")))
 
-        return 0
+            result = self.detector.detect_faces(np.array(image))
+            
+            #print(ut.decode_predictions(preds))
+            print(result)
+
+        return result
